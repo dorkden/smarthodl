@@ -1,3 +1,4 @@
+const {Telegram} = require("./utils/telegram");
 const {logger} = require('./utils/logger');
 const {getDb} = require('./utils/db');
 const {sleep} = require("./utils/utils");
@@ -7,8 +8,10 @@ class Rebalance {
     baseCurrency = '';
     quoteCurrency = '';
     config = {};
+    telegram = new Telegram({});
 
-    constructor() {
+    constructor(telegram) {
+        this.telegram = telegram;
     }
 
     getDb(symbol) {
@@ -66,7 +69,7 @@ class Rebalance {
             await this.buy(amount, price - (price * this.config.postOnlyTickPercentage / 100));
         } else {
             logger.info(`Buy - ${order.amount.toFixed(8)} ${this.baseCurrency} at ${order.price.toFixed(2)} ${this.quoteCurrency} ${order.datetime}`);
-            this.updateStick(order);
+            await this.updateStick(order);
         }
 
     }
@@ -85,14 +88,20 @@ class Rebalance {
             await this.sell(amount, price + (price * this.config.postOnlyTickPercentage / 100));
         } else {
             logger.info(`Sell   - ${order.amount.toFixed(8)} ${this.baseCurrency} at ${order.price.toFixed(2)} ${this.quoteCurrency} ${order.datetime}`);
-            this.updateStick(order);
+            await this.updateStick(order);
         }
 
     }
 
-    updateStick(order) {
+    async updateStick(order) {
 
         if (order.status === 'closed') {
+
+            if (this.config.telegram.enabled) {
+                const message = `${order.side === 'buy' ? 'Bought' : 'Sold'} ${order.amount} of ${this.baseCurrency} equal to ${order.amount * order.price} ${this.quoteCurrency}`;
+                await this.telegram.senMessage(this.config.telegram.chatId, message);
+            }
+
             // this.db.set(this.collections.balance, order.price).write();
             this.db.get(this.collections.stick).assign({
                 amount: null,
@@ -140,7 +149,7 @@ class Rebalance {
                 }
             } else if (order.status === 'closed') {
 
-                this.updateStick(order);
+                await this.updateStick(order);
 
             } else if (order.status === 'canceled') {
                 this.db.get(this.collections.stick).assign({
@@ -299,7 +308,7 @@ class Rebalance {
                 await this.execute({totalBaseCurrency, totalQuoteCurrency, price: orderBook[key][0][0]});
             } else {
                 logger.info(`${side} - ${order.amount.toFixed(8)} ${this.baseCurrency} at ${order.price.toFixed(2)} ${this.quoteCurrency} ${order.datetime}`);
-                this.updateStick(order);
+                await this.updateStick(order);
             }
 
         }
