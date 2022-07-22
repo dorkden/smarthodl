@@ -1,0 +1,19 @@
+{
+  "name": "rebalance-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "repository": {
+    "type": "git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ccxt": "^1.52.76",
+    "lowdb": "^1.0.0",
+    "winston": "^3.3.3"
+  }
+}
