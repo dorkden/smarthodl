@@ -8,17 +8,14 @@ const {Telegram} = require("./utils/telegram");
 const bootstrap = async () => {
 
     const configs = config.pairs.map(el => {
-        const {exchange} = config;
-        return Object.assign(exchange, el);
+        const {exchange, telegram} = config;
+        return {telegram, ...exchange, ...el};
     });
 
     const telegram = new Telegram(config.telegram);
-    const ex = new Exchange(config.exchange);
-    const rebalance = new Rebalance(config, telegram);
-
-    await ex.loadMarkets();
-
     await telegram.launch();
+    const ex = new Exchange(config.exchange);
+    const rebalance = new Rebalance(telegram);
 
     while (true) {
         logger.info(`------ New Iteration ------`);

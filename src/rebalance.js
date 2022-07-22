@@ -175,9 +175,9 @@ class Rebalance {
 
     async run(config, exchange) {
 
-        const currencies = config.symbol.split('/');
-
         this.config = config;
+
+        const currencies = this.config.symbol.split('/');
         this.baseCurrency = currencies[0];
         this.quoteCurrency = currencies[1];
 
@@ -296,6 +296,14 @@ class Rebalance {
             logger.info(`Halt execution: limits.cost.min: ${limits.cost.min}, cost ${amount * parseFloat(price)}`);
 
         } else {
+
+            if (side === 'buy') {
+                if (this.config.telegram.enabled) {
+                    await this.telegram.senMessage(this.config.telegram.chatId, "Balance insufficient!");
+                }
+                logger.info(`Balance insufficient!`);
+                return;
+            }
 
             let order = await this.ex.createOrder(side, amount, price);
 
