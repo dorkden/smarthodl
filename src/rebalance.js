@@ -244,7 +244,7 @@ class Rebalance {
 
         const totalBaseInQuoteCurrency = totalBaseCurrency * price;
 
-        logger.info(`totalBaseInQuoteCurrency - ${totalBaseInQuoteCurrency}`);
+        logger.info(`totalBaseInQuoteCurrency: ${totalBaseInQuoteCurrency}`);
 
         let side, amount;
 
@@ -295,16 +295,14 @@ class Rebalance {
 
             logger.info(`Halt execution: limits.cost.min: ${limits.cost.min}, cost ${amount * parseFloat(price)}`);
 
-        } else {
+        } else if (side === 'buy' && (amount * parseFloat(price)) > totalQuoteCurrency) {
 
-            if (side === 'buy') {
-                if (this.config.telegram.enabled) {
-                    await this.telegram.senMessage(this.config.telegram.chatId, "Balance insufficient!");
-                }
-                logger.info(`Balance insufficient!`);
-                return;
+            if (this.config.telegram.enabled) {
+                await this.telegram.senMessage(this.config.telegram.chatId, "Balance insufficient!");
             }
 
+            logger.info(`Balance insufficient!`);
+        } else {
             let order = await this.ex.createOrder(side, amount, price);
 
             if (order.status === 'canceled' && order.postOnly) {
@@ -318,7 +316,6 @@ class Rebalance {
                 logger.info(`${side} - ${order.amount.toFixed(8)} ${this.baseCurrency} at ${order.price.toFixed(2)} ${this.quoteCurrency} ${order.datetime}`);
                 await this.updateStick(order);
             }
-
         }
     }
 }

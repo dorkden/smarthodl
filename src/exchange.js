@@ -14,8 +14,7 @@ class Exchange {
             exchangeId,
             timeFrame,
             postOnly,
-            testMode,
-            subAccountName
+            testMode
         } = config;
 
         const exchangeClass = ccxt[exchangeId];
